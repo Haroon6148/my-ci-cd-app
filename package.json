@@ -1,0 +1,12 @@
+{
+  "name": "my-ci-cd-app",
+  "version": "1.0.0",
+  "description": "A simple app for CI/CD demonstration",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "author": "",
+  "license": "ISC"
+} 
