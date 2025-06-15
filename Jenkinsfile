@@ -42,39 +42,51 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    withCredentials([sshUserPrivateKey(credentialsId: env.SSH_KEY_CREDENTIAL_ID, keyFileVariable: 'SSH_KEY')]) {
-                        echo "Deploying to EC2 instance: ${env.EC2_IP}"
+                    // Use a generic withCredentials to get the SSH key content
+                    withCredentials([string(credentialsId: env.SSH_KEY_CREDENTIAL_ID, variable: 'SSH_PRIVATE_KEY_CONTENT')]) {
+                        // Define a path for the temporary key file
+                        def tempKeyFile = "temp_ssh_key.pem"
 
-                        // Set strict permissions on the SSH key file for Windows
+                        // Write the SSH private key content to a temporary file
+                        powershell "Set-Content -Path '${tempKeyFile}' -Value \"${env.SSH_PRIVATE_KEY_CONTENT}\" -Encoding UTF8"
+
+                        // Set strict permissions on the SSH key file for Windows using icacls
                         powershell """
-                            $keyPath = \"${env.SSH_KEY}\"
+                            $keyPath = \\"${tempKeyFile}\\"
                             # Remove inherited permissions and all explicit ACEs (Access Control Entries)
-                            icacls \$keyPath /inheritance:r
+                            icacls \\$keyPath /inheritance:r
                             # Grant Full control to the current user (Jenkins service account) and SYSTEM
-                            icacls \$keyPath /grant:r \"`$env:USERNAME`\":(F)
-                            icacls \$keyPath /grant:r \"SYSTEM\":(F)
-                            # Explicitly remove permissions for broad groups like 'Users', 'Everyone', 'Authenticated Users'
-                            icacls \$keyPath /remove:g \"BUILTIN\\Users\"
-                            icacls \$keyPath /remove:g \"Everyone\"
-                            icacls \$keyPath /remove:g \"Authenticated Users\"
+                            icacls \\$keyPath /grant:r \\\"`$env:USERNAME`\\\":(F)\
+                            icacls \\$keyPath /grant:r \\\"SYSTEM\\\":(F)\
+                            # Explicitly remove permissions for broad groups like \\\'Users\\\', \\\'Everyone\\\', \\\'Authenticated Users\\\'
+                            icacls \\$keyPath /remove:g \\\"BUILTIN\\\\Users\\\"\
+                            icacls \\$keyPath /remove:g \\\"Everyone\\\"\
+                            icacls \\$keyPath /remove:g \\\"Authenticated Users\\\"\
                         """
 
+                        echo "Deploying to EC2 instance: ${env.EC2_IP}"
+
                         // Stop existing Node.js process (if any)
-                        sh "ssh -i \${SSH_KEY} -o StrictHostKeyChecking=no ${env.EC2_USER}@${env.EC2_IP} 'sudo pkill node || true'"
+                        // Use the temporary key file with -i
+                        sh "ssh -i ${tempKeyFile} -o StrictHostKeyChecking=no ${env.EC2_USER}@${env.EC2_IP} 'sudo pkill node || true'"
 
                         // Transfer the application bundle
-                        sh "scp -i \${SSH_KEY} -o StrictHostKeyChecking=no app.zip ${env.EC2_USER}@${env.EC2_IP}:/home/${env.EC2_USER}/"
+                        // Use the temporary key file with -i
+                        sh "scp -i ${tempKeyFile} -o StrictHostKeyChecking=no app.zip ${env.EC2_USER}@${env.EC2_IP}:/home/${env.EC2_USER}/"
 
                         // Unzip and start the application on EC2
                         sh """
-                            ssh -i \${SSH_KEY} -o StrictHostKeyChecking=no ${env.EC2_USER}@${env.EC2_IP} '
-                                cd /home/${env.EC2_USER}/
-                                unzip -o app.zip
-                                nohup node app.js > app.log 2>&1 &
-                                echo \"Application started on port ${env.APP_PORT}\"
-                            '
+                            ssh -i ${tempKeyFile} -o StrictHostKeyChecking=no ${env.EC2_USER}@${env.EC2_IP} \'
+                                cd /home/${env.EC2_USER}/\
+                                unzip -o app.zip\
+                                nohup node app.js > app.log 2>&1 &\
+                                echo \\\"Application started on port ${env.APP_PORT}\\\"\
+                            \'
                         """
                         echo "Deployment initiated. Check EC2 instance logs for status."
+
+                        // Clean up: Delete the temporary key file
+                        powershell "Remove-Item -Path '${tempKeyFile}' -Force"
                     }
                 }
             }
