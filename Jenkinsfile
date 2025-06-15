@@ -35,7 +35,8 @@ pipeline {
 
         stage('Package') {
             steps {
-                powershell 'Compress-Archive -Path app.js,package.json,node_modules -DestinationPath app.zip -Update'
+                powershell 'Remove-Item -Path "app.zip" -ErrorAction SilentlyContinue'
+                powershell 'Compress-Archive -Path app.js,package.json,node_modules -DestinationPath app.zip'
             }
         }
 
