@@ -19,13 +19,17 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh 'npm install'
+                nodejs('NodeJS_Local_Install') {
+                    sh 'npm install'
+                }
             }
         }
 
         stage('Test') {
             steps {
-                sh 'npm test'
+                nodejs('NodeJS_Local_Install') {
+                    sh 'npm test'
+                }
             }
         }
 
