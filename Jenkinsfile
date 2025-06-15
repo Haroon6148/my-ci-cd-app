@@ -35,7 +35,7 @@ pipeline {
 
         stage('Package') {
             steps {
-                powershell 'Compress-Archive -Path app.js,package.json,node_modules -DestinationPath app.zip'
+                powershell 'Compress-Archive -Path app.js,package.json,node_modules -DestinationPath app.zip -Update'
             }
         }
 
