@@ -20,7 +20,7 @@ pipeline {
         stage('Build') {
             steps {
                 nodejs('NodeJS_Auto_Managed') {
-                    sh 'npm install'
+                    bat 'npm install'
                 }
             }
         }
@@ -28,7 +28,7 @@ pipeline {
         stage('Test') {
             steps {
                 nodejs('NodeJS_Auto_Managed') {
-                    sh 'npm test'
+                    bat 'npm test'
                 }
             }
         }
