@@ -19,7 +19,7 @@ pipeline {
 
         stage('Build') {
             steps {
-                nodejs('NodeJS_Local_Install') {
+                nodejs('NodeJS_Auto_Managed') {
                     sh 'npm install'
                 }
             }
@@ -27,7 +27,7 @@ pipeline {
 
         stage('Test') {
             steps {
-                nodejs('NodeJS_Local_Install') {
+                nodejs('NodeJS_Auto_Managed') {
                     sh 'npm test'
                 }
             }
