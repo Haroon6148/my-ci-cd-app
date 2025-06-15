@@ -35,6 +35,7 @@ pipeline {
 
         stage('Package') {
             steps {
+                powershell 'Get-ChildItem -Path .' // Added for debugging
                 powershell 'Compress-Archive -Path app.js,package.json,node_modules -DestinationPath app.zip'
             }
         }
