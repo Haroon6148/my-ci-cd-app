@@ -45,6 +45,20 @@ pipeline {
                     withCredentials([sshUserPrivateKey(credentialsId: env.SSH_KEY_CREDENTIAL_ID, keyFileVariable: 'SSH_KEY')]) {
                         echo "Deploying to EC2 instance: ${env.EC2_IP}"
 
+                        // Set strict permissions on the SSH key file for Windows
+                        powershell """
+                            $keyPath = \"${env.SSH_KEY}\"
+                            # Remove inherited permissions and all explicit ACEs (Access Control Entries)
+                            icacls \$keyPath /inheritance:r
+                            # Grant Full control to the current user (Jenkins service account) and SYSTEM
+                            icacls \$keyPath /grant:r \"`$env:USERNAME`\":(F)
+                            icacls \$keyPath /grant:r \"SYSTEM\":(F)
+                            # Explicitly remove permissions for broad groups like 'Users', 'Everyone', 'Authenticated Users'
+                            icacls \$keyPath /remove:g \"BUILTIN\\Users\"
+                            icacls \$keyPath /remove:g \"Everyone\"
+                            icacls \$keyPath /remove:g \"Authenticated Users\"
+                        """
+
                         // Stop existing Node.js process (if any)
                         sh "ssh -i \${SSH_KEY} -o StrictHostKeyChecking=no ${env.EC2_USER}@${env.EC2_IP} 'sudo pkill node || true'"
 
@@ -57,7 +71,7 @@ pipeline {
                                 cd /home/${env.EC2_USER}/
                                 unzip -o app.zip
                                 nohup node app.js > app.log 2>&1 &
-                                echo "Application started on port ${env.APP_PORT}"
+                                echo \"Application started on port ${env.APP_PORT}\"
                             '
                         """
                         echo "Deployment initiated. Check EC2 instance logs for status."
