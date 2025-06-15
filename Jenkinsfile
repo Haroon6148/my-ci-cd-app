@@ -35,7 +35,7 @@ pipeline {
 
         stage('Package') {
             steps {
-                bat 'zip -r app.zip app.js package.json node_modules'
+                powershell 'Compress-Archive -Path app.js,package.json,node_modules -DestinationPath app.zip'
             }
         }
 
