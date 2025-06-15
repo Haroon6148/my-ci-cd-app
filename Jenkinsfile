@@ -35,7 +35,7 @@ pipeline {
 
         stage('Package') {
             steps {
-                sh 'zip -r app.zip app.js package.json node_modules'
+                bat 'zip -r app.zip app.js package.json node_modules'
             }
         }
 
