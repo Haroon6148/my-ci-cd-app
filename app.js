@@ -6,7 +6,7 @@ const port = 3000; // You can choose any port
 const server = http.createServer((req, res) => {
   res.statusCode = 200;
   res.setHeader('Content-Type', 'text/plain');
-  res.end('Hello from CI/CD Pipeline!');
+  res.end('Hello from CI/CD Pipeline!');;
 });
 
 server.listen(port, hostname, () => {
