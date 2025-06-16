@@ -2,15 +2,9 @@ pipeline {
     agent any
 
     stages {
-        stage('Clone Repository') {
+        stage('Checkout') {
             steps {
-                git 'https://github.com/Haroon6148/my-ci-cd-app.git'
-            }
-        }
-
-        stage('Install Dependencies') {
-            steps {
-                sh 'npm install' // Only if you have package.json; remove this line if not needed
+                checkout scm
             }
         }
 
@@ -18,6 +12,15 @@ pipeline {
             steps {
                 sh 'node app.js'
             }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ Build and run completed successfully.'
+        }
+        failure {
+            echo '❌ Build failed.'
         }
     }
 }
